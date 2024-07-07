@@ -1,0 +1,14 @@
+#VScode
+.vscode/*
+!.vscode/launch.json
+
+#Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+venv/
+env/
+
+.env
+*.log
