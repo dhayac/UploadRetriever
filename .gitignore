@@ -1,6 +1,5 @@
 #VScode
-.vscode
-vscode/
+.vscode/*
 
 #Python
 __pycache__/
