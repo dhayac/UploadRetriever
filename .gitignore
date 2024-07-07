@@ -1,6 +1,6 @@
 #VScode
 .vscode
-.vscode/launch.json
+vscode/
 
 #Python
 __pycache__/
