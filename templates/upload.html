@@ -28,7 +28,7 @@
             margin-bottom: 10px;
             color: #555;
         }
-        input[type="file"] {
+        input[type="text"], input[type="file"] {
             padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
@@ -52,8 +52,15 @@
 <body>
     <h1>Upload a Document</h1>
     <form action="/processfile" method="post" enctype="multipart/form-data">
+        <label for="file_id">File ID:</label>
+        <input type="text" id="file_id" name="file_id" required>
+
+        <label for="file_topic">File Topic:</label>
+        <input type="text" id="file_topic" name="file_topic" required>
+
         <label for="file">Choose a document to upload:</label>
-        <input type="file" id="file" name="file" accept=".doc,.docx,.pdf">
+        <input type="file" id="file" name="file" accept=".doc,.docx,.pdf" required>
+        
         <button type="submit">Upload</button>
     </form>
 </body>
