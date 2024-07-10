@@ -15,9 +15,10 @@ import PyPDF2
 from io import BytesIO
 import requests
 from db_utilites.mongodb import MongoDB
+import base64
 
-db = MongoDB()
-collection = db.get_collection(r"Pdf_Store")
+mongodb = MongoDB()
+bookdb,collection = mongodb.get_collection(database_name="BOOKS", collection_name="PdfStore")
 logger = get_logger()
 app = FastAPI()
 template = Jinja2Templates(directory= r"D:\fastapi\templates")
@@ -79,30 +80,30 @@ async def sucesspage(request: Request, id: str = Form(None)):
 
 
 @app.post("/process_pdf_file/")
-async def process_pdf_file(file_id: str, file_topic: str, file: UploadFile = File(...) ,):
+async def process_pdf_file(file_id: str, file_topic: str, filename: str, file: UploadFile = File(...) ):
     # Save file locally for processing
-    contents = await file.read()
-    # with open(file.filename, 'wb') as f:
-    #     f.write(contents)
+    try:
+        content_bytes = await file.read()
+        # with open(file.filename, 'wb') as f:
+        #     f.write(contents)
+        # Process saved file
+
+        content = base64.b64encode(content_bytes)
+        
+
+
+        message = mongodb.add_files(content=content,fileid=file_id, filename= filename, 
+                          topic=file_topic, collection=collection, db=bookdb, grid_collection = "GridFs")
+
+        return message
+    except Exception as exe:
+        return {"error":str(exe)}, 500
+
+# async def process_pdf(pdf_source):
     
-    # Process saved file
-    return await process_pdf(file.filename, is_local_file=True)
-
-async def process_pdf(pdf_source, is_local_file=False):
-
-    file = BytesIO(requests.get(pdf_source).content) if not is_local_file else open(pdf_source, 'rb')
-
-    pdf_reader = PyPDF2.PdfReader(file)
-    text = ""
-    for page_no in range(len(pdf_reader.pages)):
-        text += pdf_reader.pages[page_no].extract_text()
-    
-    if is_local_file:
-        file.close()
-
-
-    return text
-
-async def add_collection(content,fileid,topic,collection):
-    db.add_files(content=content,)
-    return
+#     with open(pdf_source, 'rb') as file:
+#         pdf_reader = PyPDF2.PdfReader(file)
+#         text = ""
+#         for page_no in range(len(pdf_reader.pages)):
+#             text += pdf_reader.pages[page_no].extract_text()
+#     return text
