@@ -32,9 +32,10 @@ class MongoDB:
         except Exception as e:
             logger.error(f"Error in get Collection {e}")
     
-    def add_files(self,content: str,fileid: str, topic: str, filename: str,collection,db,grid_collection: str):
+    def add_files(self,content: str,fileid: str, topic: str, filename: str,collection,db):
         try:
-            fs = GridFS(db, collection=grid_collection)
+            griddb = self.client.get_database("Gridfs")
+            fs = GridFS(griddb, collection=fileid)
             md5 = hashlib.md5()
             md5.update(content)
             fs_id = fs.put(content, fileid = fileid)
