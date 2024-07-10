@@ -45,6 +45,7 @@ class MongoDB:
             }
 
             collection.insert_one(metadata)
+            logger.info(f"Sucess fully added to database")
         except Exception as exe:
             logger.error(f"Error during adding files to mongoDB: {exe}")
 
