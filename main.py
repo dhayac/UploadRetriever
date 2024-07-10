@@ -80,7 +80,7 @@ async def sucesspage(request: Request, id: str = Form(None)):
 
 
 @app.post("/process_pdf_file/")
-async def process_pdf_file(file_id: str, file_topic: str, filename: str, file: UploadFile = File(...) ):
+async def process_pdf_file(file_id: str, file_topic: str, file: UploadFile = File(...) ):
     # Save file locally for processing
     try:
         content_bytes = await file.read()
@@ -89,11 +89,8 @@ async def process_pdf_file(file_id: str, file_topic: str, filename: str, file: U
         # Process saved file
 
         content = base64.b64encode(content_bytes)
-        
-
-
-        message = mongodb.add_files(content=content,fileid=file_id, filename= filename, 
-                          topic=file_topic, collection=collection, db=bookdb, grid_collection = "GridFs")
+        message = mongodb.add_files(content=content,fileid=file_id, filename= file.filename, 
+                          topic=file_topic, collection=collection, db=bookdb,)
 
         return message
     except Exception as exe:
