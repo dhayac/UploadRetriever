@@ -62,14 +62,9 @@ async def sucesspage(request: Request, id: str = Form(None)):
 
 
 
-# @app.get("/uploadfile", response_class=HTMLResponse)
-# async def uploadfile(request: Request):
-#     #if not file:
-#     #    return {"no file"}
-#     #else:
-#     #    contents = await file.read()
-#     #    return {"contents":contents}
-#     return template.TemplateResponse(request= request, name = "upload.html")
+@app.get("/upload", response_class=HTMLResponse)
+async def uploadfile(request: Request):
+    return template.TemplateResponse(request= request, name = "upload.html")
 
 # @app.post("/processfile", response_class=HTMLResponse)
 # async def uploadfile(request: Request, file: UploadFile= File(...)):
@@ -79,20 +74,27 @@ async def sucesspage(request: Request, id: str = Form(None)):
 #         return {"message": type(file)}
 
 
-@app.post("/process_pdf_file/")
-async def process_pdf_file(file_id: str, file_topic: str, file: UploadFile = File(...) ):
+@app.post("/processfile/",response_class=HTMLResponse)
+async def process_pdf_file(request: Request, file_id: str = Form(...), file_topic: str = Form(...), file: UploadFile = File(...)):
     # Save file locally for processing
     try:
-        content_bytes = await file.read()
-        # with open(file.filename, 'wb') as f:
-        #     f.write(contents)
-        # Process saved file
+        if len(MongoDB.check_fileid(fileid=file_id, collection  = collection))==0:
+            content_bytes = await file.read()
+            # with open(file.filename, 'wb') as f:
+            #     f.write(contents)
+            # Process saved file
 
-        content = base64.b64encode(content_bytes)
-        message = mongodb.add_files(content=content,fileid=file_id, filename= file.filename, 
-                          topic=file_topic, collection=collection, db=bookdb,)
-
-        return message
+            content = base64.b64encode(content_bytes)
+            message = mongodb.add_files(content=content,fileid=file_id, filename= file.filename, 
+                              topic=file_topic, collection=collection, db=bookdb,)
+            
+            return template.TemplateResponse(name = "uploadmessage.html", 
+                                         context={"request":request, "message": "Sucessfully Stored in DB"})
+        
+        else:
+            return template.TemplateResponse(name = "uploadmessage.html", 
+                                         context={"request":request, "message":"fileid is already stored"})
+        #return data
     except Exception as exe:
         return {"error":str(exe)}, 500
 
@@ -104,3 +106,5 @@ async def process_pdf_file(file_id: str, file_topic: str, file: UploadFile = Fil
 #         for page_no in range(len(pdf_reader.pages)):
 #             text += pdf_reader.pages[page_no].extract_text()
 #     return text
+
+
