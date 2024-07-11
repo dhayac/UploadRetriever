@@ -32,6 +32,14 @@ class MongoDB:
         except Exception as e:
             logger.error(f"Error in get Collection {e}")
     
+    @staticmethod
+    def check_fileid(fileid: str, collection):
+        result = collection.find({"fileid":f"{fileid}"})
+        output = []
+        for r in result:
+            output.append(r)
+        return output
+    
     def add_files(self,content: str,fileid: str, topic: str, filename: str,collection,db):
         try:
             griddb = self.client.get_database("Gridfs")
@@ -39,7 +47,6 @@ class MongoDB:
             md5 = hashlib.md5()
             md5.update(content)
             fs_id = fs.put(content, fileid = fileid)
-
             metadata = {
                 "filename": filename,
                 "fileid": fileid,
