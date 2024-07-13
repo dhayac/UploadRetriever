@@ -25,10 +25,9 @@ class FaissDB:
     def load_vectordb(self):
         self.db = FAISS.load_local(r"app/vectorstore", self.embeddings,allow_dangerous_deserialization=True)
     
-    async def add_document(self,content: str, metadata: dict[str,str]) -> list[str]:
+    async def add_document(self,chunks: list[Document], metadata: dict[str,str]) -> list[str]:
         try:
-            document = [Document(content,metadata = metadata)]
-            message = await self.db.aadd_documents(document)
+            message = await self.db.aadd_documents(chunks)
             logger.info("document added to faissdb")
             return message
         except Exception as exe:
