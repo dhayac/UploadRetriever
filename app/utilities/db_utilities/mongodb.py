@@ -1,13 +1,13 @@
 
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from app.utilities.logger import get_logger
+from app.utilities import s_logger
 import hashlib
 from gridfs import GridFS
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-logger = get_logger()
+logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
 uri = "mongodb://localhost:27017/"
 
 
