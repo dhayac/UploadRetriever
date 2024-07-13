@@ -27,12 +27,12 @@
 # def get_logger():
 #     return logger
 
-from logging import getLogger, INFO, Formatter, LoggerAdapter, StreamHandler
+from logging import getLogger, INFO, Formatter, LoggerAdapter, StreamHandler, FileHandler
 # from logging.handlers import TimedRotatingFileHandler
 import os
 import sys
 
-def get_logger(name, level=INFO, file_name=r"D:\fastapi\logs"):
+def get_logger(name, level=INFO, file_name=r"D:\fastapi\logs\app.log"):
 
     if not os.path.exists(file_name):
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
@@ -41,8 +41,11 @@ def get_logger(name, level=INFO, file_name=r"D:\fastapi\logs"):
     log_format = " %(levelname)s : %(asctime)-5s %(filename)s:%(lineno)d %(funcName)-5s --> %(message)s"
     formatter = Formatter(log_format)
     handler.setFormatter(formatter)
+    filehandler = FileHandler(file_name)
+    filehandler.setFormatter(formatter)
     logger = getLogger(name)
     logger.addHandler(handler)
+    logger.addHandler(filehandler)
     logger.setLevel(level)
     return logger
 
