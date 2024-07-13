@@ -14,7 +14,7 @@ from langchain.docstore.document import Document
 from app.utilities.faiss_db import FaissDB
 import asyncio
 from contextlib import asynccontextmanager
-from app.utilities.logger import get_logger 
+from app.utilities import s_logger 
 import json
 import PyPDF2
 from io import BytesIO
@@ -27,7 +27,7 @@ from app.utilities.processpdf import parse_pdf
 
 mongodb = MongoDB()
 bookdb, collection = mongodb.get_collection(database_name="BOOKS", collection_name="PdfStore")
-logger = get_logger()
+logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
 app = FastAPI()
 template = Jinja2Templates(directory= r"D:\fastapi\templates")
 faiss_db = FaissDB()
@@ -71,9 +71,6 @@ async def sucesspage(request: Request, id: str = Form(None)):
         return template.TemplateResponse(request= request, name = "sucess.html")
     else:
         return template.TemplateResponse(request= request, name = "main.html")
-
-
-
 @app.get("/upload", response_class=HTMLResponse)
 async def uploadfile(request: Request):
     return template.TemplateResponse(request= request, name = "upload.html")

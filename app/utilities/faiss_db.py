@@ -3,11 +3,11 @@ from langchain_huggingface import HuggingFaceEmbeddings
 import numpy as np
 from langchain_core.documents import Document
 import faiss
-from app.utilities.logger import get_logger
+from app.utilities import s_logger
 from pydantic import BaseModel
 
 
-logger = get_logger()
+logger = s_logger.LoggerAdap(s_logger.get_logger(__name__), {"vectordb":"faiss"})
 class FaissDB:
     def __init__(self):
         self.embedding_name = "D:\\fastapi\\embedding_model\\all-mini-lm-l6-v2"
