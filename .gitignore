@@ -167,7 +167,7 @@ cython_debug/
 
 documents
 embedding_model/
-temp/*
+temp
 logs/
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
