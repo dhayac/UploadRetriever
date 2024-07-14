@@ -38,8 +38,10 @@
             {% for result in results %}
             <div class="result-item">
                 <!-- <p><strong>Filename:</strong> {{ result.filename }}</p> -->
-                <p><strong>FileId:</strong> {{ result.fileid }}</p>
+                <p><strong>FileId:</strong> {{ result.file_id }}</p>
+                <p><strong>Name:</strong> {{ result.name }} bytes</p>
                 <p><strong>Topic:</strong> {{ result.topic }} bytes</p>
+                <p><strong>author:</strong> {{ result.author }} bytes</p>
             </div>
             {% endfor %}
         {% else %}
