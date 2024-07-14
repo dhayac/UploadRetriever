@@ -24,15 +24,7 @@ class FaissDB:
     
     def load_vectordb(self):
         self.db = FAISS.load_local(r"app/vectorstore", self.embeddings,allow_dangerous_deserialization=True)
-    
-    async def add_document(self,chunks: list[Document], metadata: dict[str,str]) -> list[str]:
-        try:
-            message = await self.db.aadd_documents(chunks)
-            logger.info("document added to faissdb")
-            return message
-        except Exception as exe:
-            logger.error(f"Error during add document in faissdb {exe}")
-    
+
     def save_local(self):
         try:
             self.db.save_local(r"D:\fastapi\vectorstore")
@@ -40,15 +32,28 @@ class FaissDB:
         except Exception as exe:
             logger.error(f"Error during save vector in local: message {exe}")
     
+    async def add_document(self,chunks: list[Document], metadata: dict[str,str]) -> list[str]:
+        try:
+            message = await self.db.aadd_documents(chunks, metadata)
+            logger.info("document added to faissdb")
+            return message
+        except Exception as exe:
+            logger.error(f"Error during add document in faissdb {exe}")
+    
+
+    
     def initialize(self):
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embedding_name)
     
     def run_query(self, query: str) -> list[dict] :
         
         results_with_scores = self.db.similarity_search_with_score(query, k=3)
-        results = []
-        
-        for doc,score in results_with_scores:
-            results.append({"fileid": doc.metadata["fileid"], "score":score})
-        
-        return results
+
+        dic = {}
+        for doc, score in results_with_scores:
+            if f"{doc.metadata["fileid"]}" not in dic.keys():
+                dic[f"{doc.metadata["fileid"]}"] = [score]
+            else:
+                dic[f"{doc.metadata["fileid"]}"].append(score)
+        data = {key:min(value) for key,value in dic.items()}
+        return data
