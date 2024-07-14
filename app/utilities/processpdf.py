@@ -25,4 +25,5 @@ def parse_pdf(path: str):
             logger.info(f"Time Taken for parsing pdf {time.time() - start}")
             print(time.time() - start)
             os.remove(path)
+            logger.info("Removed temprory File")
             return text
