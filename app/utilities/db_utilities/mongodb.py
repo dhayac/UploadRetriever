@@ -61,18 +61,26 @@ class MongoDB:
             logger.error(f"Error during adding files to mongoDB: {exe}")
             return {"error": str(exe)}, 500
         
-    def mongo_retrive(self, collection, fileids: list[str]):
+    def mongo_retrive(self, collection, fileids: list[str]|str):
+        try:
+            if type(fileids)==  str:
+                fileids = [fileids]
+            cursors = [collection.find({"fileid":fileid}) for fileid in fileids]
+            metadata = []
+            for cursor in cursors:
+                dic = {}
+                for post in cursor:
+                    dic["fileid"] = post["fileid"]
+                    dic["topic"] = post["topic"]
+                if len(dic) != 0:
+                    metadata.append(dic)
 
-        cursors = [collection.find({"fileid":fileid}) for fileid in fileids]
-        metadata = []
-        for cursor in cursors:
-            for post in cursor:
-                metadata.append(post)
-        if len(metadata) == 0:
-            return "No files found"
-        else:
+            # if len(metadata) == 0:
+            #     return "No files found"
+            # else:
             return metadata
-
+        except Exception as exe:
+            logger.error(f"Error during retrivel {exe}")
 
     
         
