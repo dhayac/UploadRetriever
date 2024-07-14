@@ -59,13 +59,13 @@ async def mainpage(request: Request ):
     return template.TemplateResponse(request=request, name = "main.html")
 
 
-@app.post("/sucess",response_class=HTMLResponse)
-async def sucesspage(request: Request, id: str = Form(None)):
-    if id:
-        print("ID: ", id)
-        return template.TemplateResponse(request= request, name = "sucess.html")
-    else:
-        return template.TemplateResponse(request= request, name = "main.html")
+# @app.post("/sucess",response_class=HTMLResponse)
+# async def sucesspage(request: Request, id: str = Form(None)):
+#     if id:
+#         print("ID: ", id)
+#         return template.TemplateResponse(request= request, name = "sucess.html")
+#     else:
+#         return template.TemplateResponse(request= request, name = "main.html")
 
 
 @app.get("/upload", response_class=HTMLResponse)
@@ -74,11 +74,11 @@ async def uploadfile(request: Request):
 
 
 @app.post("/processfile/",response_class=HTMLResponse)
-async def process_pdf_file(request: Request, file_id: str = Form(...), 
-                           file_topic: str = Form(...), file: UploadFile = File(...)):
+async def process_pdf_file(request: Request, file_id: str = Form(...), file_name: str = Form(...), 
+                           file_topic: str = Form(...), file_author: str = Form(...), file: UploadFile = File(...)):
     # Save file locally for processing
     try:
-        if len(MongoDB.check_fileid(fileid=file_id, collection  = collection))==0:
+        if len(MongoDB.check_fileid(file_id=file_id, collection  = collection))==0:
             content_bytes = await file.read()
             temp = r"D:\fastapi\temp"
             path = os.path.join(temp,file.filename)
@@ -88,46 +88,64 @@ async def process_pdf_file(request: Request, file_id: str = Form(...),
 
             text = parse_pdf(path=path)
             textsplitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
-            doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file.filename})
+            doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file_name})
             chunk_doc = textsplitter.split_documents([doc])
             
-            #faiss
-            vector_id = await faiss_db.add_document(chunks = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
-            faiss_db.save_local()
-            
+
             #mongodb
             content = base64.b64encode(content_bytes)
-            message = mongodb.add_files(content=content,fileid=file_id, filename= file.filename, 
-                              topic=file_topic, collection=collection,vector_id = vector_id)
+            message,condition = mongodb.add_files(content=content,fileid=file_id, filename= file_name, 
+                              topic=file_topic, author=file_author,collection=collection)
+            
+            #faiss
+            if condition:
+                vector_ids = await faiss_db.add_document(chunks = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
+                collection.update_one({"fileid":file_id},{"$set":{"vector_ids":vector_ids}})
+                faiss_db.save_local()
+            
             
             return template.TemplateResponse(name = "uploadmessage.html", 
-                                         context={"request":request, "message":message[0]})
+                                         context={"request":request, "file_id": file_id,
+                                                  "file_name":file_name,
+                                                  "file_topic":file_topic,
+                                                  "file_author":file_author,
+                                                  "upload_status": message})
         
         else:
             return template.TemplateResponse(name = "uploadmessage.html", 
-                                         context={"request":request, "message":"fileid is already stored"})
+                                         context={"request":request, "file_id": file_id,
+                                                  "file_name":file_name,
+                                                  "file_topic":file_topic,
+                                                  "file_author":file_author,
+                                                  "upload_status": "File id is already available in db"})
         #return data
     except Exception as exe:
         logger.error("Error exe")
         return {"error":str(exe)}, 500
 
+
 @app.get("/query", response_class=HTMLResponse)
 async def query(request: Request):
     return template.TemplateResponse(request, name = "query.html")
 
+
 @app.post("/queryprocess", response_class=HTMLResponse)
 async def querydoc(request: Request, query: str = Form(...)):
     try:
-        
         result_faiss = faiss_db.run_query(query)
+        if len(result_faiss)> 0:
+            fileids = list(result_faiss.keys())
+            scores = list(result_faiss.values())
+            metadata_mongodb = mongodb.mongo_retrive( collection = collection,fileids=fileids, scores = scores)
 
-        fileids = result_faiss.keys()
-        metadata_mongodb = mongodb.mongo_retrive( collection = collection,fileids=fileids)
-    
-        # return metadata_mongodb
-        return template.TemplateResponse(name ="queryresult.html",context={"request":request,
+            # return metadata_mongodb
+            return template.TemplateResponse(name ="queryresult.html",context={"request":request,
                                                                            "query": query,
                                                                             "results":metadata_mongodb})
+        else: 
+            return template.TemplateResponse(name ="queryresult.html",context={"request":request,
+                                                                           "query": query,
+                                                                            "results":[]})
     except Exception as exe:
         return {"error": str(exe)}, 500
 
