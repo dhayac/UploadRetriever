@@ -29,7 +29,7 @@ mongodb = MongoDB()
 bookdb, collection = mongodb.get_collection(database_name="BOOKS", collection_name="PdfStore")
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
 app = FastAPI()
-template = Jinja2Templates(directory= r"D:\fastapi\templates")
+template = Jinja2Templates(directory= r"D:\fastapi\app\templates")
 faiss_db = FaissDB()
 faiss_db.initialize()
 faiss_db.load_vectordb()
@@ -101,21 +101,22 @@ async def process_pdf_file(request: Request, file_id: str = Form(...),
             doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file.filename})
             chunk_doc = textsplitter.split_documents([doc])
             #faiss
-            vector_id = await faiss_db.add_document(content = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
-            faiss_db.save_local()
+            vector_id = await faiss_db.add_document(chunks = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
+            #faiss_db.save_local()
             #mongodb
             content = base64.b64encode(content_bytes)
             message = mongodb.add_files(content=content,fileid=file_id, filename= file.filename, 
-                              topic=file_topic, collection=collection,vector_id = vector_id[0])
+                              topic=file_topic, collection=collection,vector_id = vector_id)
             
             return template.TemplateResponse(name = "uploadmessage.html", 
-                                         context={"request":request, "message":message})
+                                         context={"request":request, "message":message[0]})
         
         else:
             return template.TemplateResponse(name = "uploadmessage.html", 
                                          context={"request":request, "message":"fileid is already stored"})
         #return data
     except Exception as exe:
+        logger.error("Error in ")
         return {"error":str(exe)}, 500
 
 @app.post("/query", response_class=HTMLResponse)
