@@ -31,54 +31,76 @@ class MongoDB:
             logger.error(f"Error in get Collection {e}")
     
     @staticmethod
-    def check_fileid(fileid: str, collection):
-        result = collection.find({"fileid":f"{fileid}"})
+    def check_fileid(file_id: str, collection):
+        result = collection.find({"file_id":f"{file_id}"})
         output = []
         for r in result:
             output.append(r)
         return output
-    
-    def add_files(self,content: str,fileid: str, topic: str, filename: str,collection, vector_id):
+    @staticmethod
+    def chech_hash(hash: str, collection):
+        """
+            Check if a given hash exists in the specified collection.
+        Returns:
+            bool: True if the hash exists in the collection, False otherwise.
+        """
+        result = collection.find({"hash":hash})
+        output = []
+        for r in result:
+            output.append(r)
+        if len(output) != 0:
+            return True
+        else:
+            return False
+
+    def add_files(self,content: str,fileid: str, topic: str, filename: str,author: str,collection):
         try:
-            griddb = self.client.get_database("Gridfs")
-            fs = GridFS(griddb, collection=fileid)
-            # md5 = hashlib.md5()
-            # md5.update(content)
-            fs_id = fs.put(content, fileid = fileid)
-            
-            metadata = {
-                "filename": filename,
-                "fileid": fileid,
-                "topic": topic,
-                #"hash" : md5.hexdigest(),
-                "fs_id" : fs_id,
-                "vector_id":vector_id}
-            
-            collection.insert_one(metadata)
-            logger.info("Sucessfully added to collection")
-            return f"Sucessfully added to collection {filename}"
+            md5 = hashlib.md5()
+            md5.update(content)
+            hash = md5.hexdigest()
+            if not MongoDB.chech_hash(hash, collection=collection):
+
+                griddb = self.client.get_database("Gridfs")
+                fs = GridFS(griddb, collection=fileid)
+
+                fs_id = fs.put(content, fileid = fileid)
+
+                metadata = {
+                    "file_id": fileid,
+                    "name": filename,
+                    "author": author,
+                    "topic": topic,
+                    "hash" : hash,
+                    "fs_id" : fs_id}
+
+                collection.insert_one(metadata)
+                logger.info("Sucessfully added to collection")
+                return f"Sucessfully added to collection: {filename}", True
+            else:
+                return f"File is already in db: {filename}", False
         except Exception as exe:
             logger.error(f"Error during adding files to mongoDB: {exe}")
-            return {"error": str(exe)}, 500
+            return "Error occured during adding files", False
         
-    def mongo_retrive(self, collection, fileids: list[str]|str):
+    def mongo_retrive(self, collection, fileids: list[str]|str, scores: list):
         try:
             if type(fileids)==  str:
                 fileids = [fileids]
-            cursors = [collection.find({"fileid":fileid}) for fileid in fileids]
+            cursors = [collection.find({"file_id":fileid}) for fileid in fileids]
             metadata = []
             for cursor in cursors:
                 dic = {}
                 for post in cursor:
-                    dic["fileid"] = post["fileid"]
+                    dic["file_id"] = post["file_id"]
+                    dic["name"] = post["name"]
+                    dic["author"] = post["author"]
                     dic["topic"] = post["topic"]
                 if len(dic) != 0:
                     metadata.append(dic)
-
+            return metadata
             # if len(metadata) == 0:
             #     return "No files found"
             # else:
-            return metadata
         except Exception as exe:
             logger.error(f"Error during retrivel {exe}")
 
