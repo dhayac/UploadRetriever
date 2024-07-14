@@ -5,7 +5,7 @@ from langchain_core.documents import Document
 import faiss
 from app.utilities import s_logger
 from pydantic import BaseModel
-
+import os
 
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__), {"vectordb":"faiss"})
 class FaissDB:
@@ -27,14 +27,16 @@ class FaissDB:
 
     def save_local(self):
         try:
-            self.db.save_local(r"D:\fastapi\vectorstore")
+            # for file in os.listdir(r"D:\fastapi\vectorstore"):
+            #     os.remove(os.path.join(r"D:\fastapi\vectorstore", file))
+            self.db.save_local(r"app/vectorstore")
             logger.info("Vector DB saved in local")
         except Exception as exe:
             logger.error(f"Error during save vector in local: message {exe}")
     
     async def add_document(self,chunks: list[Document], metadata: dict[str,str]) -> list[str]:
         try:
-            message = await self.db.aadd_documents(chunks, metadata)
+            message = await self.db.aadd_documents(documents=chunks, metadata = metadata)
             logger.info("document added to faissdb")
             return message
         except Exception as exe:
@@ -45,7 +47,7 @@ class FaissDB:
     def initialize(self):
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embedding_name)
     
-    def run_query(self, query: str) -> list[dict] :
+    def run_query(self, query: str) :
         
         results_with_scores = self.db.similarity_search_with_score(query, k=3)
 
