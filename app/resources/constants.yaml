@@ -10,3 +10,5 @@ mongodb:
 temp:
   path:  D:\fastapi\temp
 
+faissdb:
+  path: app/vectorstore
