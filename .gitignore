@@ -178,7 +178,9 @@ logs/
 #.idea/
 
 #unwanted files
+
 fastapi.code-workspace
+
 sample.pdf
 Untitled.ipynb
 .gitignore
