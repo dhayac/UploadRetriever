@@ -11,19 +11,24 @@ logger  = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"}
 start = time.time
 
 def parse_pdf(path: str):
-            # with open(file.filename, 'wb') as f:
-            #     f.write(contents)
-            # Process saved file
-            logger.info("Started Parsing pdf")
-            start = time.time()
-            with pdfplumber.open(path) as pdf:
-                   text = ""
-                   for n,page in enumerate(pdf.pages):
-                        text += page.extract_text() + "\n"
-                        logger.info(f"pg no {n}")
+          try:
+               # with open(file.filename, 'wb') as f:
+               #     f.write(contents)
+               # Process saved file
+               logger.info("Started Parsing pdf")
+               start = time.time()
+               with pdfplumber.open(path) as pdf:
+                      text = ""
+                      for n,page in enumerate(pdf.pages):
+                           text += page.extract_text() + "\n"
+                           logger.info(f"pg no {n}")
+
+               logger.info(f"Time Taken for parsing pdf {time.time() - start}")
+               print(time.time() - start)
+               os.remove(path)
+               logger.info("Removed temprory File")
+               return text
+          
+          except Exception as exe:
+                 logger.info(f"Error in parsing pdf {exe}")
             
-            logger.info(f"Time Taken for parsing pdf {time.time() - start}")
-            print(time.time() - start)
-            os.remove(path)
-            logger.info("Removed temprory File")
-            return text
