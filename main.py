@@ -48,21 +48,16 @@ faiss_db.load_vectordb()
 #     logger.info("Lifespan context manager exited")
 
 # app.router.lifespan_context = lifespan
+
 @app.get("/")
 async def root():
     return {"message":"hello world"}
-
-# @app.post("/upload")
-# def upload_file(fileid: str):
-#     print(f"file {fileid} i uploading")
-#     time.sleep(5)
-#     print(f"file uploaded: id--> {fileid}")
-#     return {"message":f"file_id: {fileid}"}
 
 
 @app.get("/mainpage", response_class=HTMLResponse)
 async def mainpage(request: Request ):
     return template.TemplateResponse(request=request, name = "main.html")
+
 
 @app.post("/sucess",response_class=HTMLResponse)
 async def sucesspage(request: Request, id: str = Form(None)):
@@ -71,16 +66,11 @@ async def sucesspage(request: Request, id: str = Form(None)):
         return template.TemplateResponse(request= request, name = "sucess.html")
     else:
         return template.TemplateResponse(request= request, name = "main.html")
+
+
 @app.get("/upload", response_class=HTMLResponse)
 async def uploadfile(request: Request):
     return template.TemplateResponse(request= request, name = "upload.html")
-
-# @app.post("/processfile", response_class=HTMLResponse)
-# async def uploadfile(request: Request, file: UploadFile= File(...)):
-#     if not file:
-#         return {"message":"file not found"}
-#     else:
-#         return {"message": type(file)}
 
 
 @app.post("/processfile/",response_class=HTMLResponse)
@@ -92,17 +82,19 @@ async def process_pdf_file(request: Request, file_id: str = Form(...),
             content_bytes = await file.read()
             temp = r"D:\fastapi\temp"
             path = os.path.join(temp,file.filename)
+            
             with open(path, 'wb') as f:
                 f.write(content_bytes)
-            # Process saved file
-            #stream = BytesIO(content_bytes)
+
             text = parse_pdf(path=path)
             textsplitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
             doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file.filename})
             chunk_doc = textsplitter.split_documents([doc])
+            
             #faiss
             vector_id = await faiss_db.add_document(chunks = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
-            #faiss_db.save_local()
+            faiss_db.save_local()
+            
             #mongodb
             content = base64.b64encode(content_bytes)
             message = mongodb.add_files(content=content,fileid=file_id, filename= file.filename, 
@@ -116,29 +108,27 @@ async def process_pdf_file(request: Request, file_id: str = Form(...),
                                          context={"request":request, "message":"fileid is already stored"})
         #return data
     except Exception as exe:
-        logger.error("Error in ")
+        logger.error("Error exe")
         return {"error":str(exe)}, 500
 
-@app.post("/query", response_class=HTMLResponse)
-async def querydoc(request: Request, query: str):
+@app.get("/query", response_class=HTMLResponse)
+async def query(request: Request):
+    return template.TemplateResponse(request, name = "query.html")
 
-    result_faiss = faiss_db.run_query(query)
+@app.post("/queryprocess", response_class=HTMLResponse)
+async def querydoc(request: Request, query: str = Form(...)):
+    try:
+        
+        result_faiss = faiss_db.run_query(query)
 
-    fileids = [data["fileid"] for data in result_faiss]
-    metadata_mongodb = mongodb.mongo_retrive( collection = collection,fileids=fileids)
+        fileids = result_faiss.keys()
+        metadata_mongodb = mongodb.mongo_retrive( collection = collection,fileids=fileids)
     
-    return metadata_mongodb
-
-# async def store_vectordb(content, metadata):
-#     faiss_db.add_document(content)
-#     pass
-# async def process_pdf(pdf_source):
-    
-#     with open(pdf_source, 'rb') as file:
-#         pdf_reader = PyPDF2.PdfReader(file)
-#         text = ""
-#         for page_no in range(len(pdf_reader.pages)):
-#             text += pdf_reader.pages[page_no].extract_text()
-#     return text
+        # return metadata_mongodb
+        return template.TemplateResponse(name ="queryresult.html",context={"request":request,
+                                                                           "query": query,
+                                                                            "results":metadata_mongodb})
+    except Exception as exe:
+        return {"error": str(exe)}, 500
 
 
