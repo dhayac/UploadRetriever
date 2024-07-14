@@ -21,7 +21,6 @@ def parse_pdf(path: str):
                os.remove(path)
                logger.info("Removed temprory File")
                return text
-          
           except Exception as exe:
                  logger.info(f"Error in parsing pdf {exe}")
             
