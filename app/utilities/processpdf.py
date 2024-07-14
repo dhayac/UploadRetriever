@@ -1,9 +1,5 @@
 import pdfplumber
-from langchain_text_splitters import CharacterTextSplitter
-from io import BytesIO
-import requests
 import time
-from PyPDF2 import PdfReader
 from app.utilities import s_logger
 import os
 
@@ -12,9 +8,6 @@ start = time.time
 
 def parse_pdf(path: str):
           try:
-               # with open(file.filename, 'wb') as f:
-               #     f.write(contents)
-               # Process saved file
                logger.info("Started Parsing pdf")
                start = time.time()
                with pdfplumber.open(path) as pdf:
