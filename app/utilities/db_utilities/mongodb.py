@@ -42,8 +42,8 @@ class MongoDB:
         try:
             griddb = self.client.get_database("Gridfs")
             fs = GridFS(griddb, collection=fileid)
-            md5 = hashlib.md5()
-            md5.update(content)
+            # md5 = hashlib.md5()
+            # md5.update(content)
             fs_id = fs.put(content, fileid = fileid)
             
             metadata = {
