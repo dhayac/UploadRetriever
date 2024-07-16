@@ -13,42 +13,43 @@ from app.utilities import s_logger
 from app.utilities.db_utilities.mongodb import MongoDB
 import base64
 from app.utilities.processpdf import parse_pdf
+from app.utilities.constants import Constants
 
 mongodb = MongoDB()
-bookdb, collection = mongodb.get_collection(database_name="BOOKS", collection_name="PdfStore")
+bookdb, collection = mongodb.get_collection(database_name=Constants.fetch_constant("mongodb")["db_name"], collection_name=Constants.fetch_constant("mongodb")["collection_name"])
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
 app = FastAPI()
-template = Jinja2Templates(directory= r"D:\fastapi\app\templates")
+tempelates_dir = Constants.fetch_constant("templates")["path"]
+template = Jinja2Templates(directory=tempelates_dir )
 faiss_db = FaissDB()
-faiss_db.initialize()
 faiss_db.load_vectordb()
 
 
 
 @app.get("/")
 async def root():
-    return {"message":"hello world"}
-
+    return {"status":"good"}
 
 @app.get("/mainpage", response_class=HTMLResponse)
 async def mainpage(request: Request ):
-    return template.TemplateResponse(request=request, name = "main.html")
+    return template.TemplateResponse(request=request, name = Constants.fetch_constant("templates")["main"])
 
 @app.get("/upload", response_class=HTMLResponse)
 async def uploadfile(request: Request):
-    return template.TemplateResponse(request= request, name = "upload.html")
+    return template.TemplateResponse(request= request, name = Constants.fetch_constant("templates")["upload"])
 
 
-@app.post("/processfile/",response_class=HTMLResponse)
+@app.post("/processfile",response_class=HTMLResponse)
 async def process_pdf_file(request: Request, file_id: str = Form(...), file_name: str = Form(...), 
                            file_topic: str = Form(...), file_author: str = Form(...), file: UploadFile = File(...)):
     # Save file locally for processing
     try:
         if len(MongoDB.check_fileid(file_id=file_id, collection  = collection))==0:
             content_bytes = await file.read()
-            temp = r"D:\fastapi\temp"
-            path = os.path.join(temp,file.filename)
-            
+            tmp_path= Constants.fetch_constant("tmp")["path"]
+            if not os.path.exists(tmp_path):
+                os.mkdir(tmp_path)
+            path = os.path.join(tmp_path,file.filename)
             with open(path, 'wb') as f:
                 f.write(content_bytes)
 
@@ -70,7 +71,7 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
                 faiss_db.save_local()
             
             
-            return template.TemplateResponse(name = "uploadmessage.html", 
+            return template.TemplateResponse(name = Constants.fetch_constant("templates")["processfile"], 
                                          context={"request":request, "file_id": file_id,
                                                   "file_name":file_name,
                                                   "file_topic":file_topic,
@@ -78,7 +79,7 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
                                                   "upload_status": message})
         
         else:
-            return template.TemplateResponse(name = "uploadmessage.html", 
+            return template.TemplateResponse(name = Constants.fetch_constant("templates")["processfile"], 
                                          context={"request":request, "file_id": file_id,
                                                   "file_name":file_name,
                                                   "file_topic":file_topic,
@@ -92,10 +93,10 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
 
 @app.get("/query", response_class=HTMLResponse)
 async def query(request: Request):
-    return template.TemplateResponse(request, name = "query.html")
+    return template.TemplateResponse(request, name = Constants.fetch_constant("templates")["query"])
 
 
-@app.post("/queryprocess", response_class=HTMLResponse)
+@app.post("/queryresult", response_class=HTMLResponse)
 async def querydoc(request: Request, query: str = Form(...)):
     try:
         result_faiss = faiss_db.run_query(query)
@@ -105,11 +106,11 @@ async def querydoc(request: Request, query: str = Form(...)):
             metadata_mongodb = mongodb.mongo_retrive( collection = collection,fileids=fileids, scores = scores)
 
             # return metadata_mongodb
-            return template.TemplateResponse(name ="queryresult.html",context={"request":request,
+            return template.TemplateResponse(name =Constants.fetch_constant("templates")["queryresult"],context={"request":request,
                                                                            "query": query,
                                                                             "results":metadata_mongodb})
         else: 
-            return template.TemplateResponse(name ="queryresult.html",context={"request":request,
+            return template.TemplateResponse(name =Constants.fetch_constant("templates")["queryresult"],context={"request":request,
                                                                            "query": query,
                                                                             "results":[]})
     except Exception as exe:
