@@ -2,18 +2,26 @@ log_config:
   filepath: logs
 
 mongodb:
-  url: mongodb://localhost:27017/
-  dbname: BOOKS
-  collection: PdfStore
+  uri: mongodb://localhost:27017/
+  db_name: BOOKS
+  collection_name: PdfStore
   gridfs: Gridfs
 
-temp:
-  path:  temp
+tmp:
+  path:  tmp
 faissdb:
   path: app/vectorstore
 
-templates: app/templates
+templates: 
+  path: app/templates
+  main: main.html
+  upload: upload.html
+  processfile: processfile.html
+  query: query.html
+  queryresult: queryresult.html
+
 
 embedding_model: 
   model_name: all-mini-lm-l6-v2
   path: app/models/all-mini-lm-l6-v2
+
