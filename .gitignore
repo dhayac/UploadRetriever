@@ -185,3 +185,5 @@ sample.pdf
 Untitled.ipynb
 .gitignore
 test.py
+app/unit_test/test_utilities/test_constants.py
+app/unit_test/test_resource/test_constants.yaml
