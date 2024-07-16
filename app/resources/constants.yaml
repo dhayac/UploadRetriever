@@ -1,4 +1,4 @@
-log_congif:
+log_config:
   filepath: D:\fastapi\logs\app.log
 
 mongodb:
