@@ -1,5 +1,5 @@
 log_config:
-  filepath: D:\fastapi\logs\app.log
+  filepath: logs
 
 mongodb:
   url: mongodb://localhost:27017/
@@ -8,7 +8,12 @@ mongodb:
   gridfs: Gridfs
 
 temp:
-  path:  D:\fastapi\temp
-
+  path:  temp
 faissdb:
   path: app/vectorstore
+
+templates: app/templates
+
+embedding_model: 
+  model_name: all-mini-lm-l6-v2
+  path: app/models/all-mini-lm-l6-v2
