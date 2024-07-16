@@ -1,6 +1,4 @@
-from enum import Enum
 import time 
-import asyncio
 import os
 from fastapi import FastAPI, Request, Form, UploadFile, File, BackgroundTasks
 from pydantic import BaseModel
@@ -10,19 +8,10 @@ from fastapi.templating import Jinja2Templates
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
-
 from app.utilities.faiss_db import FaissDB
-import asyncio
-from contextlib import asynccontextmanager
 from app.utilities import s_logger 
-import json
-import PyPDF2
-from io import BytesIO
-import requests
-from PyPDF2 import PdfReader
 from app.utilities.db_utilities.mongodb import MongoDB
 import base64
-import nest_asyncio
 from app.utilities.processpdf import parse_pdf
 
 mongodb = MongoDB()
@@ -36,19 +25,6 @@ faiss_db.load_vectordb()
 
 
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # Start the background task to initialize FaissDB
-#     background_tasks = BackgroundTasks()
-#     background_tasks.add_task(faiss_db.initialize)
-#     # print("hi")
-#     logger.info(f"Started background task to initialize FaissDB {faiss_db}")
-#     yield
-#     # Cleanup if needed
-#     logger.info("Lifespan context manager exited")
-
-# app.router.lifespan_context = lifespan
-
 @app.get("/")
 async def root():
     return {"message":"hello world"}
@@ -57,16 +33,6 @@ async def root():
 @app.get("/mainpage", response_class=HTMLResponse)
 async def mainpage(request: Request ):
     return template.TemplateResponse(request=request, name = "main.html")
-
-
-# @app.post("/sucess",response_class=HTMLResponse)
-# async def sucesspage(request: Request, id: str = Form(None)):
-#     if id:
-#         print("ID: ", id)
-#         return template.TemplateResponse(request= request, name = "sucess.html")
-#     else:
-#         return template.TemplateResponse(request= request, name = "main.html")
-
 
 @app.get("/upload", response_class=HTMLResponse)
 async def uploadfile(request: Request):
