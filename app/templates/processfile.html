@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Upload Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .result-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .result-container div {
+            margin-bottom: 10px;
+        }
+        .result-label {
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Document Upload Result</h1>
+    <div class="result-container">
+        <div>
+            <span class="result-label">File ID:</span>
+            <span>{{ file_id }}</span>
+        </div>
+        <div>
+            <span class="result-label">File Name:</span>
+            <span>{{ file_name }}</span>
+        </div>
+        <div>
+            <span class="result-label">File Topic:</span>
+            <span>{{ file_topic }}</span>
+        </div>
+        <div>
+            <span class="result-label">File Author:</span>
+            <span>{{ file_author }}</span>
+        </div>
+        <div>
+            <span class="result-label">Upload Status:</span>
+            <span>{{ upload_status }}</span>
+        </div>
+    </div>
+</body>
+</html>
