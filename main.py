@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
-from app.utilities.faiss_db import FaissDB
+from app.services.faiss_db import FaissDB
 from app.utilities import s_logger 
 from app.utilities.db_utilities.mongodb import MongoDB
 import base64
