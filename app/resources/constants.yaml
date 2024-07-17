@@ -9,8 +9,10 @@ mongodb:
 
 tmp:
   path:  tmp
+
 faissdb:
   path: app/vectorstore
+  k: 15
 
 templates: 
   path: app/templates
