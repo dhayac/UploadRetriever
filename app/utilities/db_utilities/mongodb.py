@@ -4,8 +4,6 @@ from pymongo.server_api import ServerApi
 from app.utilities import s_logger
 import hashlib
 from gridfs import GridFS
-from pymongo.collection import Collection
-from pymongo.database import Database
 
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
 uri = "mongodb://localhost:27017/"
@@ -28,7 +26,7 @@ class MongoDB:
             collection = db.get_collection(collection_name)
             return db, collection
         except Exception as e:
-            logger.error(f"Error in get Collection {e}")
+            logger.error(f"Error in get db and Collection {e}")
     
     @staticmethod
     def check_fileid(file_id: str, collection):
@@ -37,6 +35,7 @@ class MongoDB:
         for r in result:
             output.append(r)
         return output
+    
     @staticmethod
     def chech_hash(hash: str, collection):
         """
