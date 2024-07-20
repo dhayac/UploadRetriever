@@ -1,14 +1,13 @@
 import time 
 import os
 from fastapi import FastAPI, Request, Form, UploadFile, File, BackgroundTasks
-from pydantic import BaseModel
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles 
 from fastapi.templating import Jinja2Templates
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
-from app.services.faiss_db import FaissDB
+from app.services.vector_db_services.faiss_db import FaissDB
 from app.utilities import s_logger 
 from app.utilities.db_utilities.mongodb import MongoDB
 import base64
@@ -52,7 +51,6 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
             path = os.path.join(tmp_path,file.filename)
             with open(path, 'wb') as f:
                 f.write(content_bytes)
-
             text = parse_pdf(path=path)
             textsplitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
             doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file_name})
@@ -67,7 +65,7 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
             #faiss
             if condition:
                 vector_ids = await faiss_db.add_document(chunks = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
-                collection.update_one({"fileid":file_id},{"$set":{"vector_ids":vector_ids}})
+                upload_result = collection.update_one({"file_id":file_id},{"$set":{"vector_ids":vector_ids}})
                 faiss_db.save_local()
             
             
@@ -90,11 +88,9 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
         logger.error("Error exe")
         return {"error":str(exe)}, 500
 
-
 @app.get("/query", response_class=HTMLResponse)
 async def query(request: Request):
     return template.TemplateResponse(request, name = Constants.fetch_constant("templates")["query"])
-
 
 @app.post("/queryresult", response_class=HTMLResponse)
 async def querydoc(request: Request, query: str = Form(...)):
@@ -115,5 +111,7 @@ async def querydoc(request: Request, query: str = Form(...)):
                                                                             "results":[]})
     except Exception as exe:
         return {"error": str(exe)}, 500
+    
+
 
 
