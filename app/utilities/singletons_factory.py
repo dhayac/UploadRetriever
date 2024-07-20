@@ -1,7 +1,7 @@
 from abc import ABCMeta
 
 
-class SkenSingleton(ABCMeta):
+class DcSingleton(ABCMeta):
     """This is a singleton metaclass for implementing singleton interfaces.
     author:andy
     Args:
@@ -14,5 +14,5 @@ class SkenSingleton(ABCMeta):
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(SkenSingleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(DcSingleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
