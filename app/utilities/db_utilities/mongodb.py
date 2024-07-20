@@ -5,9 +5,10 @@ from app.utilities import s_logger
 import hashlib
 from gridfs import GridFS
 from pymongo.collection import Collection
+from app.utilities.env_util import EnvironmentVariableRetriever
 
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
-uri = "mongodb://localhost:27017/"
+uri= EnvironmentVariableRetriever.get_env_variable("MONGO_URI")
 
 
 class MongoDB:

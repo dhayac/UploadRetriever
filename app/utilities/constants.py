@@ -1,9 +1,9 @@
 import yaml
 import os.path as path
-from app.utilities.singletons_factory import SkenSingleton
+from app.utilities.singletons_factory import DcSingleton
 
 
-class Constants(metaclass=SkenSingleton):
+class Constants(metaclass=DcSingleton):
     file_path = path.abspath(
         path.join(__file__, "../../resources/" + str("constants.yaml"))
     )
