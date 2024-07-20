@@ -4,6 +4,7 @@ from pymongo.server_api import ServerApi
 from app.utilities import s_logger
 import hashlib
 from gridfs import GridFS
+from pymongo.collection import Collection
 
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
 uri = "mongodb://localhost:27017/"
@@ -81,7 +82,7 @@ class MongoDB:
             logger.error(f"Error during adding files to mongoDB: {exe}")
             return "Error occured during adding files", False
         
-    def mongo_retrive(self, collection, fileids: list[str]|str, scores: list):
+    def mongo_retrive(self, collection: Collection, fileids: list[str]|str, scores: list):
         try:
             if type(fileids)==  str:
                 fileids = [fileids]
@@ -102,6 +103,16 @@ class MongoDB:
             # else:
         except Exception as exe:
             logger.error(f"Error during retrivel {exe}")
-
+            raise exe
     
-        
+    def delete(self, collection: Collection, file_ids: str):
+        try:
+            query = {"file_id": file_ids}
+            result = collection.delete_one(query)
+            if result.deleted_count > 0:
+                logger.info("Successfully data deletec")
+            else:
+                raise Exception
+        except Exception as exe:
+            logger.warning(f"Data Deletion Failed {exe}")
+
