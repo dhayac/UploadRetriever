@@ -18,5 +18,3 @@ class EnvironmentVariableRetriever(metaclass = DcSingleton):
         # First, check if the variable exists in os.environ
         if variable_name in os.environ:
             return os.environ.get(variable_name)
-
-
