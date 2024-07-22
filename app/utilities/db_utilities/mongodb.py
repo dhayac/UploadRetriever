@@ -1,15 +1,16 @@
-
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
-from app.utilities import s_logger
 import hashlib
 from gridfs import GridFS
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 from pymongo.collection import Collection
+from pymongo.database import Database
+
 from app.utilities.env_util import EnvironmentVariableRetriever
+from app.utilities import s_logger
+from app.utilities.dc_exception import FileNotFoundException
 
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
 uri= EnvironmentVariableRetriever.get_env_variable("MONGO_URI")
-
 
 class MongoDB:
     def __init__(self):  
@@ -21,7 +22,7 @@ class MongoDB:
             logger.error(f"Error during pinging error: {e}")
 
 
-    def get_collection(self, collection_name: str, database_name: str):
+    def get_db_collection(self, collection_name: str, database_name: str) -> tuple[Database, Collection]:
         try:
             db = self.client.get_database(database_name)
 
@@ -60,12 +61,9 @@ class MongoDB:
             md5.update(content)
             hash = md5.hexdigest()
             if not MongoDB.chech_hash(hash, collection=collection):
-
                 griddb = self.client.get_database("Gridfs")
                 fs = GridFS(griddb, collection=fileid)
-
                 fs_id = fs.put(content, fileid = fileid)
-
                 metadata = {
                     "file_id": fileid,
                     "name": filename,
@@ -73,7 +71,6 @@ class MongoDB:
                     "topic": topic,
                     "hash" : hash,
                     "fs_id" : fs_id}
-
                 collection.insert_one(metadata)
                 logger.info("Sucessfully added to collection")
                 return f"Sucessfully added to collection: {filename}", True
@@ -103,17 +100,42 @@ class MongoDB:
             #     return "No files found"
             # else:
         except Exception as exe:
-            logger.error(f"Error during retrivel {exe}")
-            raise exe
+            logger.error(f"Error during retrivel {exe}", exc_info= True)
+            raise Exception
     
-    def delete(self, collection: Collection, file_ids: str):
+    @staticmethod
+    def delete_doc(collection: Collection, file_id: str):
         try:
-            query = {"file_id": file_ids}
-            result = collection.delete_one(query)
-            if result.deleted_count > 0:
-                logger.info("Successfully data deletec")
-            else:
-                raise Exception
+            query = {"file_id": file_id}
+            result_doc = collection.delete_one(query)
+            if result_doc:
+                logger.info("Successfully data deleted in mongo db")
+                return result_doc
         except Exception as exe:
-            logger.warning(f"Data Deletion Failed {exe}")
+            logger.warning(f"Data Deletion Failed {exe}", exc_info=True)
+            raise  Exception
 
+    @staticmethod
+    def query_db(collection: Collection, file_id: str) -> dict:
+        query = {"file_id": file_id}
+        result = collection.find_one(query)
+        if not result:
+            raise FileNotFoundException(f"File id is not found in data base: {file_id}")
+        else:
+            return result
+    
+    def delete_gridfs(self, file_id: str) -> None:
+        try:
+            db_name = "Gridfs"
+            collection_name_chunks = f"{file_id}.chunks"
+            # delete chunks
+            db, collection = self.get_db_collection(database_name = db_name, collection_name=collection_name_chunks)
+            collection.drop()
+            # delete files
+            collection_name_files = f"{file_id}.files"
+            db, collection = self.get_db_collection(database_name = db_name, collection_name=collection_name_files)
+            collection.drop()
+            logger.info(f"GridFs Deleted Sucessfully: {file_id}")
+        except Exception as exe:
+            logger.error(f"An error occurred during the deletion of GridFS")
+            raise  Exception

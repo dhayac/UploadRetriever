@@ -1,9 +1,12 @@
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
+
+from app.services.vector_db_services.vector_db_interface import VectorDBInterface
 from app.utilities import s_logger
 from app.utilities.constants import Constants
-from app.services.vector_db_services.vector_db_interface import VectorDBInterface
+from app.utilities.dc_exception import VectoridNotFoundException
+
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__), {"vectordb":"faiss"})
 
 class FaissDB(VectorDBInterface):
@@ -42,11 +45,10 @@ class FaissDB(VectorDBInterface):
         except Exception as exe:
             logger.error(f"Error during add document in faissdb {exe}")
     
-    async def delete_document(self, vectorids)-> True:
+    async def delete_document(self, vectorids)-> bool | None:
         try:
             result = self.db.delete(vectorids)
-            if not result:
-                raise Exception
+            logger.info("Document Successfully deleted in faiss db")
         except Exception as e:
             logger.error(f"Error occured while delete document: {result}")
     
@@ -60,3 +62,12 @@ class FaissDB(VectorDBInterface):
                 dic[f"{doc.metadata["fileid"]}"].append(score)
         data = {key:min(value) for key,value in dic.items()}
         return data
+    
+    def check_document(self, vector_ids) -> bool:
+        for vector_id in vector_ids:
+            if vector_id not in list(self.db.index_to_docstore_id.values()):
+                raise VectoridNotFoundException(f"Vectors is not found in vector db ")
+        else:
+            return True
+    async def check_doc_count(self):
+        pass

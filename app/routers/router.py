@@ -3,7 +3,7 @@ import os
 import base64
 
 from fastapi import APIRouter, HTTPException, status,FastAPI, Request, Form, UploadFile, File
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
@@ -14,7 +14,7 @@ from app.utilities.db_utilities.mongodb import MongoDB
 from app.utilities.constants import Constants
 from app.utilities import s_logger
 from app.utilities.processpdf import parse_pdf
-
+from app.utilities.dc_exception import VectoridNotFoundException, FileNotFoundException
 
 logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb": "faiss"})
 
@@ -25,12 +25,15 @@ router = APIRouter(
 logger.info("vectordb router is initialized")
 
 mongodb = MongoDB()
-bookdb, collection = mongodb.get_collection(database_name=Constants.fetch_constant("mongodb")["db_name"], collection_name=Constants.fetch_constant("mongodb")["collection_name"])
+bookdb, collection = mongodb.get_db_collection(database_name=Constants.fetch_constant("mongodb")["db_name"], collection_name=Constants.fetch_constant("mongodb")["collection_name"])
 faiss_db = FaissDB()
 faiss_db.load_vectordb()
 tempelates_dir = Constants.fetch_constant("templates")["path"]
 template = Jinja2Templates(directory=tempelates_dir )
 
+def handle_500_error(response_data):
+    return JSONResponse(status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                        content=response_data)
 
 @router.get("/")
 async def root():
@@ -74,7 +77,6 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
                 upload_result = collection.update_one({"file_id":file_id},{"$set":{"vector_ids":vector_ids}})
                 faiss_db.save_local()
             
-            
             return template.TemplateResponse(name = Constants.fetch_constant("templates")["processfile"], 
                                          context={"request":request, "file_id": file_id,
                                                   "file_name":file_name,
@@ -117,3 +119,43 @@ async def querydoc(request: Request, query: str = Form(...)):
                                                                             "results":[]})
     except Exception as exe:
         return {"error": str(exe)}, 500
+    
+@router.post("/delete")
+async def delete(request: Request, file_id: str = Form(...)):
+    try:
+        #check
+        result_mongo = mongodb.query_db(collection=collection, file_id=file_id)
+        vector_ids = result_mongo["vector_ids"]
+        result_faiss = faiss_db.check_document(vector_ids)
+        #delete doc
+        if result_faiss and result_mongo:
+            await faiss_db.delete_document(vector_ids)
+            mongodb.delete_doc(collection=collection, file_id=file_id)
+            mongodb.delete_gridfs(file_id=file_id)
+            faiss_db.save_local()
+            return {
+            "status": True,
+            "file_id": file_id,
+            "message": "File deleted"}
+    
+    except VectoridNotFoundException as exe:
+        raise HTTPException(status_code = exe.get_code(), 
+                            detail= {
+                                "status": "Failed",
+                                "file_id": file_id,
+                                "error": exe.get_message()
+                            })
+    except FileNotFoundException as exe:
+        raise HTTPException(status_code = exe.get_code(), 
+                        detail= {
+                            "status": "Failed",
+                            "file_id": file_id,
+                            "error": exe.get_message()
+                        })
+    except Exception as exe:
+        raise HTTPException(status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail={
+                                "status": "Failed",
+                                "file_id": file_id,
+                                "error": exe.__str__()
+                            })
