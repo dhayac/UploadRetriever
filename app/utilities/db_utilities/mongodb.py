@@ -6,10 +6,10 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 
 from app.utilities.env_util import EnvironmentVariableRetriever
-from app.utilities import s_logger
+from app.utilities import dc_logger
 from app.utilities.dc_exception import FileNotFoundException
 
-logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
+logger = dc_logger.LoggerAdap(dc_logger.get_logger(__name__),{"vectordb":"faiss"})
 uri= EnvironmentVariableRetriever.get_env_variable("MONGO_URI")
 
 class MongoDB:
@@ -20,7 +20,7 @@ class MongoDB:
             logger.info("Pinged your deployment. You successfully connected to MongoDB!")
         except Exception as e:
             logger.error(f"Error during pinging error: {e}")
-
+            raise e
 
     def get_db_collection(self, collection_name: str, database_name: str) -> tuple[Database, Collection]:
         try:
@@ -30,6 +30,7 @@ class MongoDB:
             return db, collection
         except Exception as e:
             logger.error(f"Error in get db and Collection {e}")
+            raise e
     
     @staticmethod
     def check_fileid(file_id: str, collection):
@@ -79,7 +80,7 @@ class MongoDB:
         except Exception as exe:
             logger.error(f"Error during adding files to mongoDB: {exe}")
             return "Error occured during adding files", False
-        
+               
     def mongo_retrive(self, collection: Collection, fileids: list[str]|str, scores: list):
         try:
             if type(fileids)==  str:
@@ -101,7 +102,7 @@ class MongoDB:
             # else:
         except Exception as exe:
             logger.error(f"Error during retrivel {exe}", exc_info= True)
-            raise Exception
+            raise exe
     
     @staticmethod
     def delete_doc(collection: Collection, file_id: str):
@@ -113,16 +114,7 @@ class MongoDB:
                 return result_doc
         except Exception as exe:
             logger.warning(f"Data Deletion Failed {exe}", exc_info=True)
-            raise  Exception
-
-    @staticmethod
-    def query_db(collection: Collection, file_id: str) -> dict:
-        query = {"file_id": file_id}
-        result = collection.find_one(query)
-        if not result:
-            raise FileNotFoundException(f"File id is not found in data base: {file_id}")
-        else:
-            return result
+            raise  exe
     
     def delete_gridfs(self, file_id: str) -> None:
         try:
@@ -138,4 +130,4 @@ class MongoDB:
             logger.info(f"GridFs Deleted Sucessfully: {file_id}")
         except Exception as exe:
             logger.error(f"An error occurred during the deletion of GridFS")
-            raise  Exception
+            raise  exe

@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from app.routers.router import router
-from app.utilities import s_logger 
+from app.utilities import dc_logger 
 
-logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb":"faiss"})
+logger = dc_logger.LoggerAdap(dc_logger.get_logger(__name__),{"vectordb":"faiss"})
 
 app = FastAPI()
 

@@ -1,9 +1,9 @@
 from logging import getLogger, INFO, Formatter, LoggerAdapter, StreamHandler, FileHandler
-# from logging.handlers import TimedRotatingFileHandler
+from app.utilities.constants import Constants
 import os
 import sys
 
-def get_logger(name, level=INFO, file_name=r"D:\fastapi\logs\app.log"):
+def get_logger(name, level=INFO, file_name = Constants.fetch_constant("log_config")["filepath"]):
 
     if not os.path.exists(file_name):
         os.makedirs(os.path.dirname(file_name), exist_ok=True)

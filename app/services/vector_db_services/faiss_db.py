@@ -3,11 +3,11 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
 from app.services.vector_db_services.vector_db_interface import VectorDBInterface
-from app.utilities import s_logger
+from app.utilities import dc_logger
 from app.utilities.constants import Constants
 from app.utilities.dc_exception import VectoridNotFoundException
 
-logger = s_logger.LoggerAdap(s_logger.get_logger(__name__), {"vectordb":"faiss"})
+logger = dc_logger.LoggerAdap(dc_logger.get_logger(__name__), {"vectordb":"faiss"})
 
 class FaissDB(VectorDBInterface):
     
@@ -29,6 +29,7 @@ class FaissDB(VectorDBInterface):
             self.db = FAISS.load_local(Constants.fetch_constant("faissdb")["path"], self.embeddings,allow_dangerous_deserialization=True)
         except Exception as exe:
             logger.error(f"Error in load_vectordb {exe}")
+            raise exe
     
     def save_local(self):
         try:
@@ -36,6 +37,7 @@ class FaissDB(VectorDBInterface):
             logger.info("Vector DB saved in local")
         except Exception as exe:
             logger.error(f"Error during save vector in local: message {exe}")
+            raise exe
     
     async def add_document(self,chunks: list[Document], metadata: dict[str,str]) -> list[str]:
         try:
@@ -44,13 +46,15 @@ class FaissDB(VectorDBInterface):
             return message
         except Exception as exe:
             logger.error(f"Error during add document in faissdb {exe}")
+            raise exe
     
     async def delete_document(self, vectorids)-> bool | None:
         try:
-            result = self.db.delete(vectorids)
+            result = await self.db.adelete(vectorids)
             logger.info("Document Successfully deleted in faiss db")
         except Exception as e:
             logger.error(f"Error occured while delete document: {result}")
+            raise e
     
     def run_query(self, query: str) :
         results_with_scores = self.db.similarity_search_with_score(query, k=Constants.fetch_constant("faissdb")["k"])

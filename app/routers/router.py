@@ -2,21 +2,18 @@ import time
 import os
 import base64
 
-from fastapi import APIRouter, HTTPException, status,FastAPI, Request, Form, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document
-
 from app.services.vector_db_services.faiss_db import FaissDB
-from app.utilities import s_logger
+from app.utilities.helper import Helper
+from app.utilities import dc_logger
 from app.utilities.db_utilities.mongodb import MongoDB
 from app.utilities.constants import Constants
-from app.utilities import s_logger
-from app.utilities.processpdf import parse_pdf
+from app.utilities import dc_logger
 from app.utilities.dc_exception import VectoridNotFoundException, FileNotFoundException
 
-logger = s_logger.LoggerAdap(s_logger.get_logger(__name__),{"vectordb": "faiss"})
+logger = dc_logger.LoggerAdap(dc_logger.get_logger(__name__),{"vectordb": "faiss"})
 
 router = APIRouter(
     tags= ["Inference"],
@@ -55,26 +52,20 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
         if len(MongoDB.check_fileid(file_id=file_id, collection  = collection))==0:
             content_bytes = await file.read()
             tmp_path= Constants.fetch_constant("tmp")["path"]
-            if not os.path.exists(tmp_path):
-                os.mkdir(tmp_path)
-            path = os.path.join(tmp_path,file.filename)
-            with open(path, 'wb') as f:
-                f.write(content_bytes)
-            text = parse_pdf(path=path)
-            textsplitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
-            doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file_name})
-            chunk_doc = textsplitter.split_documents([doc])
-            
-
+            path = Helper.save_pdf(tmp_path, content=content_bytes, filename= file.filename)
+            text = Helper.parse_pdf(path) 
             #mongodb
             content = base64.b64encode(content_bytes)
-            message,condition = mongodb.add_files(content=content,fileid=file_id, filename= file_name, 
+            message, condition = mongodb.add_files(content=content,fileid=file_id, filename= file_name, 
                               topic=file_topic, author=file_author,collection=collection)
             
+            chunk_doc = Helper.create_chunk(file_id, file_name=file_name, text= text)
             #faiss
             if condition:
                 vector_ids = await faiss_db.add_document(chunks = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
-                upload_result = collection.update_one({"file_id":file_id},{"$set":{"vector_ids":vector_ids}})
+                # upload_result = collection.update_one({"file_id":file_id},{"$set":{"vector_ids":vector_ids}})
+                Helper.checkfiles_db(collection, file_id)
+                await Helper.update_vectorid(collection, file_id, vector_ids)
                 faiss_db.save_local()
             
             return template.TemplateResponse(name = Constants.fetch_constant("templates")["processfile"], 
@@ -124,9 +115,10 @@ async def querydoc(request: Request, query: str = Form(...)):
 async def delete(request: Request, file_id: str = Form(...)):
     try:
         #check
-        result_mongo = mongodb.query_db(collection=collection, file_id=file_id)
+        result_mongo = Helper.checkfiles_db(collection=collection, file_id=file_id)
         vector_ids = result_mongo["vector_ids"]
         result_faiss = faiss_db.check_document(vector_ids)
+        
         #delete doc
         if result_faiss and result_mongo:
             await faiss_db.delete_document(vector_ids)
