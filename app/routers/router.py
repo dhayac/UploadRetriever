@@ -73,7 +73,8 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
                                                   "file_name":file_name,
                                                   "file_topic":file_topic,
                                                   "file_author":file_author,
-                                                  "upload_status": message})
+                                                  "upload_status": message,
+                                                  "filescount": await Helper.files_count(collection)})
         
         else:
             return template.TemplateResponse(name = Constants.fetch_constant("templates")["processfile"], 
@@ -81,7 +82,8 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
                                                   "file_name":file_name,
                                                   "file_topic":file_topic,
                                                   "file_author":file_author,
-                                                  "upload_status": "File id is already available in db"})
+                                                  "upload_status": "File id is already available in db",
+                                                  "filescount": await Helper.files_count(collection)})
         #return data
     except Exception as exe:
         logger.error("Error exe")
@@ -98,7 +100,7 @@ async def querydoc(request: Request, query: str = Form(...)):
         if len(result_faiss)> 0:
             fileids = list(result_faiss.keys())
             scores = list(result_faiss.values())
-            metadata_mongodb = mongodb.mongo_retrive( collection = collection,fileids=fileids, scores = scores)
+            metadata_mongodb = mongodb.mongo_retrive(collection = collection,fileids=fileids, scores = scores)
 
             # return metadata_mongodb
             return template.TemplateResponse(name =Constants.fetch_constant("templates")["queryresult"],context={"request":request,
@@ -128,26 +130,47 @@ async def delete(request: Request, file_id: str = Form(...)):
             return {
             "status": True,
             "file_id": file_id,
-            "message": "File deleted"}
+            "message": "File deleted",
+            "filecount": await Helper.files_count(collection)}
     
     except VectoridNotFoundException as exe:
         raise HTTPException(status_code = exe.get_code(), 
                             detail= {
                                 "status": "Failed",
                                 "file_id": file_id,
-                                "error": exe.get_message()
+                                "message": exe.get_message(),
+                                "filecount": await Helper.files_count(collection)
                             })
     except FileNotFoundException as exe:
         raise HTTPException(status_code = exe.get_code(), 
                         detail= {
                             "status": "Failed",
                             "file_id": file_id,
-                            "error": exe.get_message()
+                            "message": exe.get_message(),
+                            "filecount": await Helper.files_count(collection)
                         })
     except Exception as exe:
         raise HTTPException(status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail={
                                 "status": "Failed",
                                 "file_id": file_id,
-                                "error": exe.__str__()
+                                "message": exe.__str__(),
+                                "filecount": await Helper.files_count(collection)
                             })
+@router.post("/filecont")
+def count_file(request: Request, file_id: str = Form(...)):
+    try:
+        count = Helper.files_count(collection=collection)
+        return {
+        "status": True,
+        "file_id": file_id,
+        "counts": count,
+        "message": "File deleted"}
+    except Exception as exe:
+        raise HTTPException(status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail={
+                        "status": "Failed",
+                        "file_id": file_id,
+                        "message": exe.__str__(),
+                        "counts": count
+                    })
