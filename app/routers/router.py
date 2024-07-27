@@ -22,7 +22,8 @@ router = APIRouter(
 logger.info("vectordb router is initialized")
 
 mongodb = MongoDB()
-bookdb, collection = mongodb.get_db_collection(database_name=Constants.fetch_constant("mongodb")["db_name"], collection_name=Constants.fetch_constant("mongodb")["collection_name"])
+bookdb, collection = mongodb.get_db_metacollection(database_name=Constants.fetch_constant("mongodb")["db_name"], 
+                                                   collection_name1=f"{Constants.fetch_constant("mongodb")["collection_name"]}.files")
 faiss_db = FaissDB()
 faiss_db.load_vectordb()
 tempelates_dir = Constants.fetch_constant("templates")["path"]
@@ -49,7 +50,7 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
                            file_topic: str = Form(...), file_author: str = Form(...), file: UploadFile = File(...)):
     # Save file locally for processing
     try:
-        if len(MongoDB.check_fileid(file_id=file_id, collection  = collection))==0:
+        if len(Helper.find_files(file_id=file_id, collection  = collection))==0:
             content_bytes = await file.read()
             tmp_path= Constants.fetch_constant("tmp")["path"]
             path = Helper.save_pdf(tmp_path, content=content_bytes, filename= file.filename)
@@ -64,8 +65,11 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
             if condition:
                 vector_ids = await faiss_db.add_document(chunks = chunk_doc, metadata= {"fileid":file_id,"topic":file_topic})
                 # upload_result = collection.update_one({"file_id":file_id},{"$set":{"vector_ids":vector_ids}})
-                Helper.checkfiles_db(collection, file_id)
-                await Helper.update_vectorid(collection, file_id, vector_ids)
+                res = Helper.find_files(collection=collection, file_id=file_id)
+                if len(res)>0:
+                    await Helper.update_vectorid(collection, file_id, vector_ids)
+                else:
+                    raise FileNotFoundError(f"error occured while updating vector id")
                 faiss_db.save_local()
             
             return template.TemplateResponse(name = Constants.fetch_constant("templates")["processfile"], 
@@ -85,8 +89,24 @@ async def process_pdf_file(request: Request, file_id: str = Form(...), file_name
                                                   "upload_status": "File id is already available in db",
                                                   "filescount": await Helper.files_count(collection)})
         #return data
+    except FileNotFoundError as exe:
+        res = Helper.find_files(file_id=file_id, collection=collection)
+        res_faiss = Helper.check_document(faiss_db.db, vector_ids)
+        if len(res)>0:
+            mongodb.delete_doc(collection, file_id)
+        if res_faiss:
+            faiss_db.delete_document(vector_ids)
+        logger.error(f"Error is {exe}")
+        return {"error":str(exe)}, 500
+
     except Exception as exe:
-        logger.error("Error exe")
+        res = Helper.find_files(file_id=file_id, collection=collection)
+        res_faiss = Helper.check_document(faiss_db.db, vector_ids)
+        if len(res)>0:
+            mongodb.delete_doc(collection, file_id)
+        if res_faiss:
+            faiss_db.delete_document(vector_ids)
+        logger.error(f"Error {exe}")
         return {"error":str(exe)}, 500
 
 @router.get("/query", response_class=HTMLResponse)
@@ -100,7 +120,7 @@ async def querydoc(request: Request, query: str = Form(...)):
         if len(result_faiss)> 0:
             fileids = list(result_faiss.keys())
             scores = list(result_faiss.values())
-            metadata_mongodb = mongodb.mongo_retrive(collection = collection,fileids=fileids, scores = scores)
+            metadata_mongodb = MongoDB.mongo_retrive(collection = collection,fileids=fileids, scores = scores)
 
             # return metadata_mongodb
             return template.TemplateResponse(name =Constants.fetch_constant("templates")["queryresult"],context={"request":request,
@@ -117,15 +137,17 @@ async def querydoc(request: Request, query: str = Form(...)):
 async def delete(request: Request, file_id: str = Form(...)):
     try:
         #check
-        result_mongo = Helper.checkfiles_db(collection=collection, file_id=file_id)
-        vector_ids = result_mongo["vector_ids"]
-        result_faiss = faiss_db.check_document(vector_ids)
-        
+        result_mongo = Helper.find_files(collection=collection, file_id=file_id)
+        if len(result_mongo)==0:
+            raise FileNotFoundException("File id is not found in db")
+        vector_ids = result_mongo[0]["vector_ids"]
+        result_faiss = Helper.check_document(faiss_db.db, vector_ids)
+        if not result_faiss:
+            VectoridNotFoundException
         #delete doc
         if result_faiss and result_mongo:
             await faiss_db.delete_document(vector_ids)
-            mongodb.delete_doc(collection=collection, file_id=file_id)
-            mongodb.delete_gridfs(file_id=file_id)
+            mongodb.delete_doc(collection, file_id=file_id)
             faiss_db.save_local()
             return {
             "status": True,
@@ -158,6 +180,7 @@ async def delete(request: Request, file_id: str = Form(...)):
                                 "filecount": await Helper.files_count(collection)
                             })
 @router.post("/filecont")
+
 def count_file(request: Request, file_id: str = Form(...)):
     try:
         count = Helper.files_count(collection=collection)

@@ -51,16 +51,7 @@ class Helper(metaclass = DcSingleton):
         doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file_name})
         chunk_doc = textsplitter.split_documents([doc])
         return chunk_doc
-    
-    @staticmethod
-    def checkfiles_db(collection: Collection, file_id: str) -> dict:
-        query = {"file_id": file_id}
-        result = collection.find_one(query)
-        if not result:
-            raise FileNotFoundException(f"File id is not found in data base: {file_id}")
-        else:
-            return result
-        
+
     @staticmethod
     async def update_vectorid(collection: Collection, file_id: str, vector_ids):
         try:
@@ -78,4 +69,19 @@ class Helper(metaclass = DcSingleton):
             return len(lst)
         except Exception as exe:
             raise exe
-             
+    
+    @staticmethod
+    def find_files(file_id, collection: Collection):
+        result = collection.find({"file_id":file_id})
+        output = []
+        for r in result:
+            output.append(r)
+        return output
+    
+    @staticmethod
+    def check_document(vectordb, vector_ids) -> bool:
+        for vector_id in vector_ids:
+            if vector_id not in list(vectordb.index_to_docstore_id.values()):
+                return False
+        else:
+            return True

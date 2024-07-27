@@ -67,10 +67,5 @@ class FaissDB(VectorDBInterface):
         data = {key:min(value) for key,value in dic.items()}
         return data
     
-    def check_document(self, vector_ids) -> bool:
-        for vector_id in vector_ids:
-            if vector_id not in list(self.db.index_to_docstore_id.values()):
-                raise VectoridNotFoundException(f"Vectors is not found in vector db ")
-        else:
-            return True
+
         
