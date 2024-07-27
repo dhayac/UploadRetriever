@@ -87,19 +87,17 @@ class MongoDB:
                 fileids = [fileids]
             cursors = [collection.find({"file_id":fileid}) for fileid in fileids]
             metadata = []
-            for cursor in cursors:
+            for n, cursor in enumerate(cursors):
                 dic = {}
                 for post in cursor:
                     dic["file_id"] = post["file_id"]
                     dic["name"] = post["name"]
                     dic["author"] = post["author"]
                     dic["topic"] = post["topic"]
+                    dic["score"] = scores[n]
                 if len(dic) != 0:
                     metadata.append(dic)
             return metadata
-            # if len(metadata) == 0:
-            #     return "No files found"
-            # else:
         except Exception as exe:
             logger.error(f"Error during retrivel {exe}", exc_info= True)
             raise exe

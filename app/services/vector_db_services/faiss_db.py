@@ -73,5 +73,4 @@ class FaissDB(VectorDBInterface):
                 raise VectoridNotFoundException(f"Vectors is not found in vector db ")
         else:
             return True
-    async def check_doc_count(self):
-        pass
+        

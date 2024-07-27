@@ -46,7 +46,7 @@ class Helper(metaclass = DcSingleton):
               raise exe 
     
     @staticmethod
-    def create_chunk(file_id: str, file_name: str, text: str):
+    def create_chunk(file_id: str, file_name: str, text: str) -> list[Document]:
         textsplitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
         doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file_name})
         chunk_doc = textsplitter.split_documents([doc])
@@ -70,3 +70,12 @@ class Helper(metaclass = DcSingleton):
         except Exception as exe:
              logger.info(f"Error occured update vector ids {exe}")
              raise exe
+        
+    @staticmethod
+    async def files_count(collection: Collection) -> int:
+        try:
+            lst = list(collection.find())
+            return len(lst)
+        except Exception as exe:
+            raise exe
+             
