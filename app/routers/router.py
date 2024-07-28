@@ -116,11 +116,9 @@ async def query(request: Request):
 @router.post("/queryresult", response_class=HTMLResponse)
 async def querydoc(request: Request, query: str = Form(...)):
     try:
-        result_faiss = faiss_db.run_query(query)
+        result_faiss = await faiss_db.run_query(query)
         if len(result_faiss)> 0:
-            fileids = list(result_faiss.keys())
-            scores = list(result_faiss.values())
-            metadata_mongodb = MongoDB.mongo_retrive(collection = collection,fileids=fileids, scores = scores)
+            metadata_mongodb = MongoDB.mongo_retrive(collection = collection,fileids=result_faiss)
 
             # return metadata_mongodb
             return template.TemplateResponse(name =Constants.fetch_constant("templates")["queryresult"],context={"request":request,

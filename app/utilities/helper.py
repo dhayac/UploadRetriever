@@ -47,7 +47,7 @@ class Helper(metaclass = DcSingleton):
     
     @staticmethod
     def create_chunk(file_id: str, file_name: str, text: str) -> list[Document]:
-        textsplitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
+        textsplitter = RecursiveCharacterTextSplitter(chunk_size = 1500,chunk_overlap=0)
         doc = Document(page_content = text, metadata = {"fileid":file_id,"filename":file_name})
         chunk_doc = textsplitter.split_documents([doc])
         return chunk_doc

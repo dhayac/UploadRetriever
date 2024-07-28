@@ -87,7 +87,7 @@ class MongoDB:
             raise exe
     
     @staticmethod           
-    def mongo_retrive(collection: Collection, fileids: list[str]|str, scores: list):
+    def mongo_retrive(collection: Collection, fileids: list[str]|str, scores: list|None = None):
         try:
             if type(fileids)==  str:
                 fileids = [fileids]
@@ -100,7 +100,10 @@ class MongoDB:
                     dic["name"] = post["name"]
                     dic["author"] = post["author"]
                     dic["topic"] = post["topic"]
-                    dic["score"] = scores[n]
+                    if scores:
+                        dic["score"] = scores[n]
+                    else:
+                        dic["score"] = scores
                 if len(dic) != 0:
                     metadata.append(dic)
             return metadata
