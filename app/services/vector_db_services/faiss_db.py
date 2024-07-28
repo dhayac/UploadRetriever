@@ -1,4 +1,5 @@
 import warnings
+import os
 
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -20,17 +21,33 @@ class FaissDB(VectorDBInterface):
         self.embedding_path = Constants.fetch_constant("embedding_model")["path"]
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embedding_path)
     
-    def __create_vectordb(self):
-        with open(r"D:\fastapi\documents\Car.txt",encoding="utf-8") as f:
-            self.text = f.read()
-        self.topic = "Car"
-        self.doument_embeddings = self.embeddings.embed_documents([self.text])
-        self.document = Document(page_content=self.text, metadata = {"topic": self.topic})
-        self.db = FAISS.from_documents([self.document],embedding=self.embeddings)
-        self.db.save_local(r"D:\fastapi\vectorstore")
+    def create_vectordb(self):
+        try:
+            with open(r"sample_documents\Dog.txt", encoding="utf-8") as f:
+                self.sample1 = f.read()
+            with open(r"sample_documents\Ferari.txt", encoding="utf-8") as f:
+                self.sample2 = f.read()
+            # Embed the documents
+            self.embed1 = self.embeddings.embed_documents([self.sample1])[0]  # Get the first (and only) embedding
+            self.embed2 = self.embeddings.embed_documents([self.sample2])[0]  # Get the first (and only) embedding
+
+            # Create Document objects
+            document1 = Document(page_content=self.sample1, metadata={"fileid": "sample:0", "topic": "sample:0"})
+            document2 = Document(page_content=self.sample2, metadata={"fileid": "sample:1", "topic": "sample:1"})
+
+            # Initialize FAISS vector store
+            db = FAISS.from_documents([document1, document2], embedding=self.embeddings)
+
+            # Save the FAISS vector store locally
+            db.save_local(Constants.fetch_constant("faissdb")["path"])
+        except Exception as exe:
+            logger.info(f"Error occured creating vector db {exe}")
+            raise exe
     
     def load_vectordb(self):
         try:
+            if not os.path.exists(Constants.fetch_constant("faissdb")["path"]):
+                self.create_vectordb()
             self.db = FAISS.load_local(Constants.fetch_constant("faissdb")["path"], self.embeddings,allow_dangerous_deserialization=True)
         except Exception as exe:
             logger.error(f"Error in load_vectordb {exe}")
