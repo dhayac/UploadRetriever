@@ -192,3 +192,4 @@ app\unit_test
 /models
 
 test.py
+app/vectorstore

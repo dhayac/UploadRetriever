@@ -11,6 +11,7 @@ tmp:
 
 faissdb:
   path: app/vectorstore
+  threshold: 0.4
   k: 15
 
 templates: 
