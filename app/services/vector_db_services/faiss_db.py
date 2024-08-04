@@ -79,7 +79,7 @@ class FaissDB(VectorDBInterface):
             raise e
     
     async def run_query(self, query: str) :
-        retriever = self.db.as_retriever(search_type="similarity_score_threshold", search_kwargs={'score_threshold': Constants.fetch_constant("threshold")})
+        retriever = self.db.as_retriever(search_type="similarity_score_threshold", search_kwargs={'score_threshold': Constants.fetch_constant("faissdb")["threshold"]})
         result = await retriever.ainvoke(input = query)
         fileids = []
         for doc in result:

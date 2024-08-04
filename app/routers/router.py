@@ -127,7 +127,7 @@ async def querydoc(request: Request, query: str = Form(...)):
                                                                            "query": query,
                                                                             "results":[]})
     except Exception as exe:
-        return {"error": str(exe)}, 500
+        return {"error": str(exe)}
     
 @router.post("/delete")
 async def delete(request: Request, file_id: str = Form(...)):
