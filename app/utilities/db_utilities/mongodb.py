@@ -65,6 +65,23 @@ class MongoDB:
             return False
 
     def add_files(self,content: str,fileid: str, topic: str, filename: str,author: str,collection):
+        """
+        Add a file to the MongoDB collection with metadata.
+    
+        Args:
+            content (str): The content of the file to be added.
+            fileid (str): The ID of the file.
+            topic (str): The topic associated with the file.
+            filename (str): The name of the file.
+            author (str): The author of the file.
+            collection: The MongoDB collection to add the file to.
+    
+        Returns:
+            tuple[str, bool]: A message indicating the result of the operation and a boolean status.
+    
+        Raises:
+            Exception: If there is an error during the process of adding the file to MongoDB.
+        """
         try:
             md5 = hashlib.md5()
             md5.update(content)
@@ -88,6 +105,22 @@ class MongoDB:
     
     @staticmethod           
     def mongo_retrive(collection: Collection, fileids: list[str]|str, scores: list|None = None):
+        
+        """
+        Retrieve metadata from a MongoDB collection for given file IDs.
+    
+        Args:
+            collection (Collection): The MongoDB collection to query.
+            fileids (list[str] | str): A list of file IDs or a single file ID to retrieve metadata for.
+            scores (list | None, optional): A list of scores corresponding to the file IDs. Defaults to None.
+    
+        Returns:
+            list[dict]: A list of dictionaries containing metadata for each file ID.
+    
+        Raises:
+            Exception: If there is an error during retrieval.
+        """
+
         try:
             if type(fileids)==  str:
                 fileids = [fileids]
@@ -112,6 +145,17 @@ class MongoDB:
             raise exe
     
     def delete_doc(self,metadata_collection: Collection, file_id: str):
+        """
+        Delete a document from the MongoDB collection based on file ID.
+
+        Args:
+            metadata_collection (Collection): The MongoDB collection containing metadata.
+            file_id (str): The ID of the file to delete.
+
+        Raises:
+            FileNotFoundError: If the file is not found in the collection.
+            Exception: If there is an error during the deletion process.
+        """
         try:
             result = Helper.find_files(file_id=file_id,collection=metadata_collection)
             if len(result)>0:

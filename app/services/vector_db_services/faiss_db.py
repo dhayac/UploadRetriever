@@ -22,6 +22,12 @@ class FaissDB(VectorDBInterface):
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embedding_path)
     
     def create_vectordb(self):
+        """
+        Create a FAISS vector database by embedding documents using sample documents and saving the vector store locally.
+        Suppresses all UserWarnings.
+        Raises:
+            Exception: If there is an error during the creation of the vector database.
+        """
         try:
             with open(r"sample_documents\Dog.txt", encoding="utf-8") as f:
                 self.sample1 = f.read()
@@ -45,6 +51,12 @@ class FaissDB(VectorDBInterface):
             raise exe
     
     def load_vectordb(self):
+        
+        """
+        Load the FAISS vector database from a local path. If it doesn't exist, create it first.
+        Raises:
+            Exception: If there is an error loading the vector database.
+        """       
         try:
             if not os.path.exists(Constants.fetch_constant("faissdb")["path"]):
                 self.create_vectordb()
@@ -54,6 +66,13 @@ class FaissDB(VectorDBInterface):
             raise exe
     
     def save_local(self):
+        
+        """
+        Save the current FAISS vector database state to a local path.
+        Raises:
+            Exception: If there is an error during saving the vector database locally.
+
+        """
         try:
             self.db.save_local(Constants.fetch_constant("faissdb")["path"])
             logger.info("Vector DB saved in local")
@@ -62,6 +81,19 @@ class FaissDB(VectorDBInterface):
             raise exe
     
     async def add_document(self,chunks: list[Document], metadata: dict[str,str]) -> list[str]:
+        """
+        Add a document to the FAISS vector database asynchronously.
+
+        Args:
+            chunks (list[Document]): A list of Document objects to be added.
+            metadata (dict[str, str]): Metadata associated with the documents.
+
+        Returns:
+            list[str]: Messages indicating the status of the operation.
+        Raises:
+            Exception: If there is an error adding the document to the FAISS vector database.
+        """
+    
         try:
             message = await self.db.aadd_documents(documents=chunks, metadata = metadata)
             logger.info("document added to faissdb")
@@ -71,6 +103,19 @@ class FaissDB(VectorDBInterface):
             raise exe
     
     async def delete_document(self, vectorids)-> bool | None:
+
+        """
+        Delete a document from the FAISS vector database asynchronously.
+
+        Args:
+            vectorids: The vector IDs of the documents to be deleted.
+
+        Returns:
+            bool | None: A boolean indicating the success of the operation, or None.
+
+        Raises:
+            Exception: If there is an error deleting the document from the FAISS vector database.
+        """
         try:
             result = await self.db.adelete(vectorids)
             logger.info("Document Successfully deleted in faiss db")
@@ -79,6 +124,18 @@ class FaissDB(VectorDBInterface):
             raise e
     
     async def run_query(self, query: str) :
+        """
+        Run a query against the FAISS vector database and return file IDs of similar documents.
+
+        Args:
+            query (str): The query string to search for.
+
+        Returns:
+            list[str]: A list of file IDs of the documents that are similar to the query.
+
+        Raises:
+            Exception: If there is an error running the query on the FAISS vector database.
+        """
         retriever = self.db.as_retriever(search_type="similarity_score_threshold", search_kwargs={'score_threshold': Constants.fetch_constant("faissdb")["threshold"]})
         result = await retriever.ainvoke(input = query)
         fileids = []
