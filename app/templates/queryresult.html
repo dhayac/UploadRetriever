@@ -38,12 +38,15 @@
             {% for result in results %}
             <div class="result-item">
                 <!-- <p><strong>Filename:</strong> {{ result.filename }}</p> -->
-                <p><strong>FileId:</strong> {{ result.fileid }}</p>
-                <p><strong>Topic:</strong> {{ result.topic }} bytes</p>
+                <p><strong>FileId:</strong> {{ result.file_id }}</p>
+                <p><strong>Name:</strong> {{ result.name }} </p>
+                <p><strong>Topic:</strong> {{ result.topic }} </p>
+                <p><strong>author:</strong> {{ result.author }} </p>
+                <p><strong>score:</strong> {{ result.score }} </p>
             </div>
             {% endfor %}
         {% else %}
-            <p>No results found.</p>
+            <p>No Related Files Found.</p>
         {% endif %}
     </div>
 </body>
