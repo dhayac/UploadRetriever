@@ -8,5 +8,4 @@ pdfplumber==0.11.2
 pymongo==4.7.2
 pytest==8.2.2
 PyYAML==6.0.1
-PyYAML==6.0.1
 faiss-cpu==1.8.0
