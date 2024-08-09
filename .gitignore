@@ -166,13 +166,30 @@ dmypy.json
 cython_debug/
 
 documents
-
-
+embedding_model/
+temp
+logs/
+.vscode/
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+#unwanted files
+
 fastapi.code-workspace
+
 sample.pdf
+Untitled.ipynb
+.gitignore
+
+app/unit_test/test_utilities/test_constants.py
+app/unit_test/test_resource/test_constants.yaml
+app\unit_test
+
+/models
+
+test.py
+app/vectorstore

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .results {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Query Results</h1>
+    <div class="results">
+        <h2>Results for "{{ query }}":</h2>
+        {% if results %}
+            {% for result in results %}
+            <div class="result-item">
+                <!-- <p><strong>Filename:</strong> {{ result.filename }}</p> -->
+                <p><strong>FileId:</strong> {{ result.file_id }}</p>
+                <p><strong>Name:</strong> {{ result.name }} </p>
+                <p><strong>Topic:</strong> {{ result.topic }} </p>
+                <p><strong>author:</strong> {{ result.author }} </p>
+                <p><strong>score:</strong> {{ result.score }} </p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No Related Files Found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
