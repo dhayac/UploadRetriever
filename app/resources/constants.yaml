@@ -2,7 +2,6 @@ log_config:
   filepath: logs\app.log
 
 mongodb:
-  uri: mongodb://localhost:27017/
   db_name: BOOKS
   collection_name: PdfStore
 
