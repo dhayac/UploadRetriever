@@ -7,7 +7,6 @@ def get_logger(name, level=INFO, file_name = Constants.fetch_constant("log_confi
 
     if not os.path.exists(file_name):
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
-    
     handler = StreamHandler(sys.stdout)
     log_format = " %(levelname)s : %(asctime)-5s %(filename)s:%(lineno)d %(funcName)-5s --> %(message)s"
     formatter = Formatter(log_format)

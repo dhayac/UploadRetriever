@@ -20,8 +20,10 @@ router = APIRouter(
 logger.info("vectordb router is initialized")
 
 mongodb = MongoDB()
-bookdb, collection = mongodb.get_db_metacollection(database_name=Constants.fetch_constant("mongodb")["db_name"], 
-                                                   collection_name1=f"{Constants.fetch_constant("mongodb")["collection_name"]}.files")
+collection_name1 = Constants.fetch_constant("mongodb")["collection_name"]
+collection_name1+=".files"
+db_name = Constants.fetch_constant("mongodb")["db_name"]
+bookdb, collection = mongodb.get_db_metacollection(database_name= db_name, collection_name1=collection_name1)
 faiss_db = FaissDB()
 faiss_db.load_vectordb()
 tempelates_dir = Constants.fetch_constant("templates")["path"]

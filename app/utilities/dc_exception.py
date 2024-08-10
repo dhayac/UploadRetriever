@@ -1,5 +1,5 @@
 from abc import abstractmethod
-import status
+from fastapi import status
 
 class DcException(Exception):
 
