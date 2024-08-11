@@ -4,7 +4,7 @@ import os
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
-
+from sentence_transformers import SentenceTransformer
 from app.services.vector_db_services.vector_db_interface import VectorDBInterface
 from app.utilities import dc_logger
 from app.utilities.constants import Constants
@@ -19,6 +19,12 @@ class FaissDB(VectorDBInterface):
     
     def __init__(self):
         self.embedding_path = Constants.fetch_constant("embedding_model")["path"]
+        if not os.path.exists(self.embedding_path):
+            logger.info(f"Model is not found Downloading...")
+            model = SentenceTransformer(Constants.fetch_constant("embedding_model")["model"])
+            os.makedirs(self.embedding_path, exist_ok=True)
+            model.save(self.embedding_path)
+            logger.info(f"Model Saved in {self.embedding_path}")
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embedding_path)
     
     def create_vectordb(self):

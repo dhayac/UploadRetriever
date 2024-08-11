@@ -22,6 +22,7 @@ templates:
   queryresult: queryresult.html
 
 embedding_model: 
+  model: sentence-transformers/all-MiniLM-L6-v2
   model_name: all-mini-lm-l6-v2
   path: models/all-mini-lm-l6-v2
 
