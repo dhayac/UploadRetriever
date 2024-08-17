@@ -14,16 +14,3 @@ subapi = FastAPI()
 subapi.include_router(router)
 app.mount("/vectordb/faiss", subapi)
 logger.info("main intitialized")
-
-
-
-
-
-
-
-
-
-    
-
-
-

@@ -10,4 +10,4 @@ ENV MONGO_URI=mongodb://localhost:27017/
 RUN pip install --upgrade pip
 RUN pip install status
 
-
+#docker run -it --add-host host.docker.internal:host-gateway -p 4023:8000 -v .:/opt ["container name"] 
